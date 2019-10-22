@@ -18,60 +18,59 @@ class AuthController {
     try {
       user = await userRepository.findOneOrFail({ where: { username } });
     } catch (error) {
-      res.status(401).send();
+      res.status(401).send("User not found");
     }
 
     // check if encrypted password match
     if (!user.checkIfUnencryptedPasswordIsValid(password)) {
-      res.status(401).send();
+      res.status(401).send("Password is incorrect");
       return;
     }
 
     // sign JWT, valid for 1 hour
+    const expiresIn = "1h";
     const token = jwt.sign({ userId: user.id, username: user.username }, config.jwtSecret, {
-      expiresIn: "1h"
+      expiresIn
     });
 
-    res.send(token);
+    res.status(200).send({ token, expiresIn });
   };
 
   static changePassword = async (req: Request, res: Response) => {
-    //Get ID from JWT
+    // get id from JWT
     const id = res.locals.jwtPayload.userId;
 
-    //Get parameters from the body
     const { oldPassword, newPassword } = req.body;
     if (!(oldPassword && newPassword)) {
       res.status(400).send();
     }
 
-    //Get user from the database
     const userRepository = getRepository(User);
     let user: User;
     try {
       user = await userRepository.findOneOrFail(id);
     } catch (id) {
-      res.status(401).send();
+      res.status(401).send("User not found");
     }
 
     //Check if old password matchs
     if (!user.checkIfUnencryptedPasswordIsValid(oldPassword)) {
-      res.status(401).send();
+      res.status(401).send("New password cant be the same as old password");
       return;
     }
 
-    //Validate de model (password lenght)
+    // validate password length
     user.password = newPassword;
     const errors = await validate(user);
     if (errors.length > 0) {
       res.status(400).send(errors);
       return;
     }
-    //Hash the new password and save
+    
     user.hashPassword();
     userRepository.save(user);
 
-    res.status(204).send();
+    res.status(204).send("Password changed successfully");
   };
 }
 export default AuthController;
