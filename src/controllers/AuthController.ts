@@ -32,7 +32,6 @@ class AuthController {
       expiresIn: "1h"
     });
 
-    //Send the jwt in the response
     res.send(token);
   };
 
