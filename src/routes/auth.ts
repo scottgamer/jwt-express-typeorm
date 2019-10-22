@@ -3,10 +3,8 @@ import AuthController from "../controllers/AuthController";
 import { checkJwt } from "../middleware/checkJwt";
 
 const router = Router();
-//Login route
-router.post("/login", AuthController.login);
 
-//Change my password
+router.post("/login", AuthController.login);
 router.post("/change-password", [checkJwt], AuthController.changePassword);
 
 export default router;
